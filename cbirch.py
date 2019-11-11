@@ -1,4 +1,3 @@
-??? from here until ???END lines may have been inserted/deleted
 import math
 from skimage import color
 from skimage import io
@@ -17,33 +16,24 @@ import sys
 # This method draws the two vertical lines onto the image
 def drawVerticalLine(image, rowValue):
 
-    for y in range(len(image[0]) ):
+    for y in range(len(image ) ):
         image[y][rowValue][0] = 0
         image[y][rowValue][1] = 0
         image[y][rowValue][2] = 0
-        
 
-def drawVerticalLine(self, rowValue):
+    return image
 
-    for x in range(len(self.image[0]) ):
-         pass
+def drawHorizontalLine(image, columnValue):
 
-
-# Return True if this location exsits 
-# in the class's image field
-def doesLocationExist(self, x, y):
-
-    if ( x < 0 or y < 0 ):
-        return False
-
-    if ( (y
-        
-            
-
-# This method draws the two horizontal lines onto
-# the image
-def drawHorizontalLine(columnValue)
+    # Draw the first horizontal line
+    for x in range(len(image[0]) ):
+        image[columnValue][x][0] = 0
+        image[columnValue][x][1] = 0
+        image[columnValue][x][2] = 0
     
+
+    return image
+
 
 
 
@@ -101,21 +91,63 @@ class histogram:
                 # self.colorBins[] = 
 
 
+# This class stores information about a given ellipse
+class ellipse:
 
-# This method will display a given image
-def display(image):
+    # Constructor
+    def __init__(self, x, y, sigma):
+    
+        self.x = x
+        self.y = y
+        self.sigma = sigma
+    
+    
+    # def computeMinorAxis(self):
+
+    # def computeMajorAxis(self)
+
+
+
+# This method will display a given image in grayscale
+def display_gray(image):
+    
+    cv.namedWindow('image', cv.WINDOW_NORMAL)
+    cv.resizeWindow('image', 500, 500)
+    cv.imshow('image', image)
+    cv.waitKey(0) 
+    # plt.imshow(image)
+    # plt.show()
+
+# This method will display a given image in color
+def display_color(image):
     plt.imshow(image)
     plt.show()
 
 
 
+# This method will construct the video
+def constructVideo():
+    
+    
+    originalImage = importImage_N(1)
+
+    # Convert the image to grayscale
+    image = cv.cvtColor(originalImage, cv.COLOR_BGR2GRAY)
+
+    # Get the edges of the image
+    image = cv.Canny(image, 100, 300)
+    display_gray(image)
+
+    originalImage = drawVerticalLine(originalImage, 40)
+    originalImage = drawHorizontalLine(originalImage, 40)
+
+    display_color(originalImage)
+
+
 
 ############ MAIN ###################
 
-
-display(importImage_N(10 ) )
-
-
+constructVideo()
 
 
 # inputImage = cv.cvtColor(inputImage, cv.COLOR_BGR2GRAY)
@@ -125,4 +157,3 @@ display(importImage_N(10 ) )
 
 
 
-???END
