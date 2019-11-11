@@ -126,31 +126,53 @@ def display_color(image):
 
 
 # This method will construct the video
-def constructVideo():
+def constructVideo(startingImage, startingEllipse, compareFunction):
     
+    numImages = 500
     
-    originalImage = importImage_N(1)
+    # To start, this is the first image 
+    priorImage = startingImage
+    priorEllipse = startingEllipse
+    
+    for i in range(2, numImages + 1):
+                
+        # Get the next image in the set
+        newImage = importImage_N(i)
 
-    # Convert the image to grayscale
-    image = cv.cvtColor(originalImage, cv.COLOR_BGR2GRAY)
+        # Convert the image to grayscale
+        image = cv.cvtColor(newImage, cv.COLOR_BGR2GRAY)
 
-    # Get the edges of the image
-    image = cv.Canny(image, 100, 300)
-    display_gray(image)
+        # Get the edges of the image
+        image = cv.Canny(image, 100, 300)
+        display_gray(image)
+    
 
-    originalImage = drawVerticalLine(originalImage, 40)
-    originalImage = drawHorizontalLine(originalImage, 40)
+        # 
+        # search(priorImage, newImage)
+    
 
-    display_color(originalImage)
+        # Draw the bounding box on the image
+        newImage = drawVerticalLine(newImage, 40)
+        newImage = drawHorizontalLine(newImage, 40)    
+        # Display the image for testing
+        display_color(newImage)
 
 
 
 ############ MAIN ###################
 
-constructVideo()
+# Import the starting image
+startImage = importImage_N(1)
+
+# FIX ME 
+# Choose a comparison function
+
+# Create the starting ellipse
+constructVideo(startImage, 1, None)
 
 
-# inputImage = cv.cvtColor(inputImage, cv.COLOR_BGR2GRAY)
+
+
 
 
 ########### MAIN ####################
