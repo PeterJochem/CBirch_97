@@ -35,6 +35,50 @@ def drawHorizontalLine(image, columnValue):
     return image
 
 
+# This method draws a bounding box centered 
+# at the point (x,y) and with dimensions height, width
+def drawBoundingBox(image, x, y, height, width):
+    
+    shiftLeft = float(width) / 2.0
+    shiftUp = float(height) / 2.0
+    
+    # Compute the columns to put our horizontal lines
+    columnValue1 = y - int(shiftUp)
+    columnValue2 = y + int(shiftUp)
+   
+    # Compute the rows to put the vertical lines
+    rowValue1 = x - int(shiftLeft)
+    rowValue2 = x + int(shiftLeft)
+
+
+    # Draw the first horizontal line
+    for i in range( x + int(-shiftLeft), x + int(shiftLeft) ):
+        image[columnValue1][i][0] = 0
+        image[columnValue1][i][1] = 255
+        image[columnValue1][i][2] = 0
+
+    # Draw the second horizontal line
+    for i in range( x + int(-shiftLeft), x + int(shiftLeft) ):
+        image[columnValue2][i][0] = 0
+        image[columnValue2][i][1] = 255
+        image[columnValue2][i][2] = 0
+
+    
+    # Draw the first vertical line
+    for i in range( y + int(-shiftUp), y + int(shiftUp) ):
+        image[i][rowValue1][0] = 0
+        image[i][rowValue1][1] = 255
+        image[i][rowValue1][2] = 0
+    
+    # Draw the second vertical line
+    for i in range( y + int(-shiftUp), y + int(shiftUp) ):
+        image[i][rowValue2][0] = 0
+        image[i][rowValue2][1] = 255
+        image[i][rowValue2][2] = 0
+
+    return image
+
+
 
 
 # This method opens an image from disk and 
@@ -163,12 +207,19 @@ def constructVideo(startingImage, startingEllipse, compareFunction):
 
 # Import the starting image
 startImage = importImage_N(1)
+display_color(startImage)
+
+# startImage = drawVerticalLine(startImage, 40)
+# startImage = drawHorizontalLine(startImage, 40)
+
+startImage = drawBoundingBox(startImage, 70, 45, 45, 40)
+display_color(startImage)
 
 # FIX ME 
 # Choose a comparison function
 
 # Create the starting ellipse
-constructVideo(startImage, 1, None)
+# constructVideo(startImage, 1, None)
 
 
 
