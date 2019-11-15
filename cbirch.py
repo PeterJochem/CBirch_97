@@ -11,6 +11,8 @@ import sys
 
 ##############
 # Globals go here
+ellipseSize = 40
+priorImage = None
 ##############
 
 # This method draws the two vertical lines onto the image
@@ -139,12 +141,15 @@ class histogram:
 class ellipse:
 
     # Constructor
-    def __init__(self, x, y, sigma):
+    def __init__(self, x, y, sigma, scaleFactor):
     
         self.x = x
         self.y = y
         self.sigma = sigma
-    
+         
+        self.a = scaleFactor * sigma
+        self.b = scaleFactor * 1
+
     
     # def computeMinorAxis(self):
 
@@ -168,6 +173,74 @@ def display_color(image):
     plt.show()
 
 
+# Given an ellipse, compute if the given point is inside the ellipse
+# (x,y) is a point in the image
+def isInside(myEllipse, x, y):
+    
+
+    term1 = ( (myEllipse.x - x)**2) / float(myEllipse.b**2)
+    term2 = ( (myEllipse.y - y)**2) / float(myEllipse.a**2)
+    
+    if ( (term1 + term2) < 1):
+        return True
+
+
+    return False
+
+
+# This checks that a given (x,y) pair in an image exists 
+def isLocation(image, x, y):
+    
+    if ( len(image) <= y):
+        return False
+
+    if ( len(image[0] ) <= x ):
+        return False
+
+    return True
+
+
+# This method takes an ellipse and constructs 
+# its sum of square distances (SSD)
+def ssd(image, priorEllipse, newEllipse): 
+    
+    global priorImage
+
+    # Convert the image to grayscale
+    grayImage = cv.cvtColor(image, cv.COLOR_BGR2GRAY)   
+
+    # The template's ellipses's location
+    x_c = priorEllipse.x 
+    y_c = priorEllipse.y 
+    
+    # How far to search over the image
+    width = int(priorEllipse.a) + 10
+    height = int(priorEllipse.b) + 10
+    
+    ssd = 0
+
+    # Traverse a rectangular section of the image
+    for y in range( -1 * height, height ):
+        for x in range( -1 * width, width ):
+            
+            # Current pixel in the new search window
+            currentX = x_c + x  
+            currentY = y_c + y
+        
+            if ( isLocation(image, currentX, currentY) ):
+                if ( isInside(priorEllipse, currentX, currentY) == True):
+                    image[currentY][currentX] = 0
+                    
+                    # Compute the statistic
+                    i_new = grayImage[currentY][currentX]
+                    
+                    i_t = priorImage[currentY][currentX][0]
+
+                    ssd = ssd + (i_new - i_t)**2 
+
+    print("The ssd is " + str(ssd) )
+    return image
+
 
 # This method will construct the video
 def constructVideo(startingImage, startingEllipse, compareFunction):
@@ -178,6 +251,7 @@ def constructVideo(startingImage, startingEllipse, compareFunction):
     priorImage = startingImage
     priorEllipse = startingEllipse
     
+
     for i in range(2, numImages + 1):
                 
         # Get the next image in the set
@@ -214,6 +288,17 @@ display_color(startImage)
 
 startImage = drawBoundingBox(startImage, 70, 45, 45, 40)
 display_color(startImage)
+
+
+#  def __init__(self, x, y, sigma, scaleFactor):
+myEllipse = ellipse(70, 45, 1.2, 20)
+
+
+priorImage = startImage         
+resultImage = ssd(startImage, myEllipse, myEllipse)
+
+
+display_color(resultImage)
 
 # FIX ME 
 # Choose a comparison function
