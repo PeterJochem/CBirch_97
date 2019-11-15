@@ -246,8 +246,7 @@ def ssd(newImage, priorEllipse, newEllipse):
                     ssd = ssd + ( (i_new - i_t)**2)  
 
     print("The ssd is " + str(ssd) )
-    return newImage
-
+    return ssd
 
 # Search locally 
 # stride is the delta in x and y for the next point
@@ -265,36 +264,57 @@ def localSearch_ssd(newImage, stride, totalSearch):
 
     offset = np.linspace(0, totalSearch, stride)
     
+    allNums = np.array( [] )
+    allEllipses = np.array( [] )
+
     # For each offset, compute the ssd for the new ellipse
     for i in range(len(offset) ):
         
-
-        #   def __init__(self, x, y, sigma, scaleFactor):
-
         # Shift just the x 
         newE1 = ellipse(x + offset[i], y, sigma, scaleFactor)
         newE2 = ellipse(x - offset[i], y, sigma, scaleFactor)
         num1 = ssd(newImage, priorEllipse, newE1) 
         num2 = ssd(newImage, priorEllipse, newE2)
-        
+         
         # Shift the y
-        newE1 = ellipse(x, y + offset[i], sigma, scaleFactor)
-        newE2 = ellipse(x, y - offset[i], sigma, scaleFactor) 
-        num3 = ssd(newImage, priorEllipse, newE1)     
-        num4 = ssd(newImage, priorEllipse, newE2)
+        newE3 = ellipse(x, y + offset[i], sigma, scaleFactor)
+        newE4 = ellipse(x, y - offset[i], sigma, scaleFactor) 
+        num3 = ssd(newImage, priorEllipse, newE3)     
+        num4 = ssd(newImage, priorEllipse, newE4)
 
         # Shift the x and y - in same directon
-        newE1 = ellipse(x + offset[i], y + offset[i], sigma, scaleFactor)
-        newE2 = ellipse(x - offset[i], y - offset[i], sigma, scaleFactor)
-        num5 = ssd(newImage, priorEllipse, newE1)
-        num6 = ssd(newImage, priorEllipse, newE2)
+        newE5 = ellipse(x + offset[i], y + offset[i], sigma, scaleFactor)
+        newE6 = ellipse(x - offset[i], y - offset[i], sigma, scaleFactor)
+        num5 = ssd(newImage, priorEllipse, newE5)
+        num6 = ssd(newImage, priorEllipse, newE6)
 
         # Shift the x and y - in opposite directons
-        newE1 = ellipse(x + offset[i], y - offset[i], sigma, scaleFactor)
-        newE2 = ellipse(x - offset[i], y + offset[i], sigma, scaleFactor)
-        num7 = ssd(newImage, priorEllipse, newE1)
-        num8 = ssd(newImage, priorEllipse, newE2)
+        newE7 = ellipse(x + offset[i], y - offset[i], sigma, scaleFactor)
+        newE8 = ellipse(x - offset[i], y + offset[i], sigma, scaleFactor)
+        num7 = ssd(newImage, priorEllipse, newE7)
+        num8 = ssd(newImage, priorEllipse, newE8)
+        
+        nums = np.array( [num1, num2, num3, num4, num5, num6, num7, num8] )  
+        ellipses = np.array( [newE1, newE2, newE3, newE4, newE5, newE6, newE7, newE8] )
+        
+        allNums = np.append(allNums, nums)
+        allEllipses = np.append( allEllipses, ellipses )
+    
 
+    print("The allNums array is ")
+    print(allNums)
+    
+    # Traverse each number and find the smallest one
+    minIndex = 0
+    for i in range(0, len(allNums) ):
+        
+        if ( (allNums[i] ) < (allNums[minIndex] ) ):
+            minIndex = i
+    
+
+    print(allNums[minIndex] )
+    desiredEllipse = allEllipses[minIndex]
+    return desiredEllipse
 
 
 # This method will construct the video
@@ -356,6 +376,10 @@ secondImage = cv.cvtColor(secondImage, cv.COLOR_BGR2GRAY)
 
 # resultImage = ssd(secondImage, myEllipse, myEllipse)
 localSearch_ssd(secondImage, 5, 10)
+
+
+
+
 
 # display_color(resultImage)
 
