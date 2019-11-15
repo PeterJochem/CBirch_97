@@ -9,10 +9,15 @@ import cv2 as cv
 from mpl_toolkits import mplot3d
 import sys
 
+from decimal import * 
+
 ##############
 # Globals go here
 ellipseSize = 40
 priorImage = None
+priorEllipse = None
+sigma = 1.2
+scaleFactor = 20
 ##############
 
 # This method draws the two vertical lines onto the image
@@ -193,29 +198,29 @@ def isLocation(image, x, y):
     
     if ( len(image) <= y):
         return False
-
-    if ( len(image[0] ) <= x ):
-        return False
+    
+    #if ( len(image[0] ) <= x ):
+    #    return False
 
     return True
 
 
 # This method takes an ellipse and constructs 
 # its sum of square distances (SSD)
-def ssd(image, priorEllipse, newEllipse): 
+def ssd(newImage, priorEllipse, newEllipse): 
     
     global priorImage
 
-    # Convert the image to grayscale
-    grayImage = cv.cvtColor(image, cv.COLOR_BGR2GRAY)   
-
     # The template's ellipses's location
-    x_c = priorEllipse.x 
-    y_c = priorEllipse.y 
+    #x_c = priorEllipse.x 
+    #y_c = priorEllipse.y 
     
+    x_c = newEllipse.x
+    y_c = newEllipse.y
+
     # How far to search over the image
-    width = int(priorEllipse.a) + 10
-    height = int(priorEllipse.b) + 10
+    width = int(newEllipse.a) + 10
+    height = int(newEllipse.b) + 10
     
     ssd = 0
 
@@ -224,22 +229,72 @@ def ssd(image, priorEllipse, newEllipse):
         for x in range( -1 * width, width ):
             
             # Current pixel in the new search window
-            currentX = x_c + x  
-            currentY = y_c + y
+            currentX = int(x_c + x)  
+            currentY = int(y_c + y)
         
-            if ( isLocation(image, currentX, currentY) ):
-                if ( isInside(priorEllipse, currentX, currentY) == True):
-                    image[currentY][currentX] = 0
+            if ( isLocation(newImage, currentX, currentY) ):
+                if ( isInside(newEllipse, currentX, currentY) == True):
+                    #image[currentY][currentX] = 0
                     
                     # Compute the statistic
-                    i_new = grayImage[currentY][currentX]
-                    
-                    i_t = priorImage[currentY][currentX][0]
+                    i_new = newImage[currentY][currentX]
+                    # print(i_new)
 
-                    ssd = ssd + (i_new - i_t)**2 
+                    i_t = priorImage[currentY][currentX]
+                    # print(i_t)
+        
+                    ssd = ssd + ( (i_new - i_t)**2)  
 
     print("The ssd is " + str(ssd) )
-    return image
+    return newImage
+
+
+# Search locally 
+# stride is the delta in x and y for the next point
+# totalSearch is how far in total to search over in both 
+# the x and y directions
+def localSearch_ssd(newImage, stride, totalSearch):
+    
+    global priorImage
+    global priorEllipse
+    global sigma
+    global scaleFactor
+    
+    x = priorEllipse.x
+    y = priorEllipse.y
+
+    offset = np.linspace(0, totalSearch, stride)
+    
+    # For each offset, compute the ssd for the new ellipse
+    for i in range(len(offset) ):
+        
+
+        #   def __init__(self, x, y, sigma, scaleFactor):
+
+        # Shift just the x 
+        newE1 = ellipse(x + offset[i], y, sigma, scaleFactor)
+        newE2 = ellipse(x - offset[i], y, sigma, scaleFactor)
+        num1 = ssd(newImage, priorEllipse, newE1) 
+        num2 = ssd(newImage, priorEllipse, newE2)
+        
+        # Shift the y
+        newE1 = ellipse(x, y + offset[i], sigma, scaleFactor)
+        newE2 = ellipse(x, y - offset[i], sigma, scaleFactor) 
+        num3 = ssd(newImage, priorEllipse, newE1)     
+        num4 = ssd(newImage, priorEllipse, newE2)
+
+        # Shift the x and y - in same directon
+        newE1 = ellipse(x + offset[i], y + offset[i], sigma, scaleFactor)
+        newE2 = ellipse(x - offset[i], y - offset[i], sigma, scaleFactor)
+        num5 = ssd(newImage, priorEllipse, newE1)
+        num6 = ssd(newImage, priorEllipse, newE2)
+
+        # Shift the x and y - in opposite directons
+        newE1 = ellipse(x + offset[i], y - offset[i], sigma, scaleFactor)
+        newE2 = ellipse(x - offset[i], y + offset[i], sigma, scaleFactor)
+        num7 = ssd(newImage, priorEllipse, newE1)
+        num8 = ssd(newImage, priorEllipse, newE2)
+
 
 
 # This method will construct the video
@@ -281,24 +336,28 @@ def constructVideo(startingImage, startingEllipse, compareFunction):
 
 # Import the starting image
 startImage = importImage_N(1)
-display_color(startImage)
+secondImage = importImage_N(2)
+
+# display_color(startImage)
 
 # startImage = drawVerticalLine(startImage, 40)
 # startImage = drawHorizontalLine(startImage, 40)
 
-startImage = drawBoundingBox(startImage, 70, 45, 45, 40)
-display_color(startImage)
+# startImage = drawBoundingBox(startImage, 70, 45, 45, 40)
+# display_color(startImage)
 
 
 #  def __init__(self, x, y, sigma, scaleFactor):
 myEllipse = ellipse(70, 45, 1.2, 20)
+priorEllipse = myEllipse
 
+priorImage = cv.cvtColor(startImage, cv.COLOR_BGR2GRAY)
+secondImage = cv.cvtColor(secondImage, cv.COLOR_BGR2GRAY)
 
-priorImage = startImage         
-resultImage = ssd(startImage, myEllipse, myEllipse)
+# resultImage = ssd(secondImage, myEllipse, myEllipse)
+localSearch_ssd(secondImage, 5, 10)
 
-
-display_color(resultImage)
+# display_color(resultImage)
 
 # FIX ME 
 # Choose a comparison function
