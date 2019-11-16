@@ -16,7 +16,7 @@ from decimal import *
 priorImage = None
 priorEllipse = None
 sigma = 1.2
-scaleFactor = 9
+scaleFactor = 14
 ##############
 
 # This method draws the two vertical lines onto the image
@@ -231,7 +231,7 @@ def drawEllipse(newImage, newEllipse):
 # This method takes an ellipse and constructs 
 # its sum of square distances (SSD)
 def ncc(newImage, priorEllipse, newEllipse):
-
+    
     global priorImage
 
     x_c = newEllipse.x
@@ -249,7 +249,7 @@ def ncc(newImage, priorEllipse, newEllipse):
     prior_denom = 0
     new_denom = 0
 
-    ncc = 0
+    my_ncc = 0
 
     # Traverse a rectangular section of the image
     # Compute the average of each image's section
@@ -310,15 +310,15 @@ def ncc(newImage, priorEllipse, newEllipse):
                         new_hat = new_hat + i_new**2
 
                         
-                        ncc = ncc + (i_new * i_t)
+                        my_ncc = my_ncc + (i_new * i_t)
 
 
              
     # Normalize the ncc
-    ncc = ncc / math.sqrt( (  (old_hat) * (new_hat)  ) ) 
+    my_ncc = my_ncc / math.sqrt( (  (old_hat) * (new_hat)  ) ) 
 
-    print("The ncc is " + str(cc) )
-    return ncc
+    # print("The ncc is " + str(my_ncc) )
+    return my_ncc
 
 
 
@@ -432,7 +432,6 @@ def localSearch_ncc(newImage, stride, totalSearch):
     y = priorEllipse.y
 
     offset = np.linspace(0, totalSearch, stride)
-    print(offset)
 
     allNums = np.array( [] )
     allEllipses = np.array( [] )
@@ -476,9 +475,6 @@ def localSearch_ncc(newImage, stride, totalSearch):
         allEllipses = np.append( allEllipses, ellipses )
 
 
-    print("The allNums array is ")
-    print(allNums)
-
     # Traverse each number and find the smallest one
     maxIndex = 0
     maxValue = -1000
@@ -488,8 +484,8 @@ def localSearch_ncc(newImage, stride, totalSearch):
             maxIndex = i
             maxValue = allNums[i]
 
-    print("The maxIndex is " + str(maxIndex) )
-    print("The length of allNums is " + str(len(allNums)) )
+    #print("The maxIndex is " + str(maxIndex) )
+    #print("The length of allNums is " + str(len(allNums)) )
     # print(allNums[minIndex] )
     desiredEllipse = allEllipses[maxIndex]
 
@@ -568,8 +564,8 @@ def localSearch_cc(newImage, stride, totalSearch):
             maxIndex = i
             maxValue = allNums[i]
 
-    print("The maxIndex is " + str(maxIndex) )
-    print("The length of allNums is " + str(len(allNums)) )
+    #print("The maxIndex is " + str(maxIndex) )
+    #print("The length of allNums is " + str(len(allNums)) )
     # print(allNums[minIndex] )
     desiredEllipse = allEllipses[maxIndex]
 
@@ -708,15 +704,19 @@ for i in range(1, 500):
     currentImage_gray = cv.cvtColor(currentImage_color, cv.COLOR_BGR2GRAY)
    
     # Run it with priorImage - it nails it!
-    returnedEllipse = localSearch_ncc(currentImage_gray, 5, 5)
+    newEllipse = localSearch_ncc(currentImage_gray, 5, 5)
 
     # print( str(returnedEllipse.x) + ", " + str(returnedEllipse.y) )
-
-    currentImage_color = drawEllipse(currentImage_color, returnedEllipse)
+    
+    # drawBoundingBox(image, x, y, height, width)
+    print(newEllipse.y)
+    currentImage_color = drawBoundingBox(currentImage_color, int(newEllipse.x), int(newEllipse.y), 35, 35) 
+    # currentImage_color = drawEllipse(currentImage_color, returnedEllipse)
+    
     display_color(currentImage_color)
 
     # Set up the next iteration
-    priorEllipse = returnedEllipse
+    priorEllipse = newEllipse
     priorImage = currentImage_gray
 
 
