@@ -94,7 +94,8 @@ def drawBoundingBox(image, x, y, height, width):
 def importImage(imageName):
 
     try:
-        image = imageio.imread(imageName)      
+        # image = imageio.imread(imageName)      
+        image = cv.imread(imageName)
         return image
     except:
         print("There was an IO error opening the image")
@@ -696,6 +697,9 @@ startEllipse = ellipse(70, 45, sigma, scaleFactor)
 priorEllipse = startEllipse
 priorImage = cv.cvtColor(startImage, cv.COLOR_BGR2GRAY)
 
+height , width , layers =  startImage.shape
+
+out = cv.VideoWriter('output.avi', cv.VideoWriter_fourcc('M','J','P','G'), 10, (width, height))
 
 for i in range(1, 500):
 
@@ -713,7 +717,8 @@ for i in range(1, 500):
     currentImage_color = drawBoundingBox(currentImage_color, int(newEllipse.x), int(newEllipse.y), 35, 35) 
     # currentImage_color = drawEllipse(currentImage_color, returnedEllipse)
     
-    display_color(currentImage_color)
+    # display_color(currentImage_color)
+    out.write(currentImage_color)
 
     # Set up the next iteration
     priorEllipse = newEllipse
@@ -721,7 +726,7 @@ for i in range(1, 500):
 
 
 
-
+out.release()
 
 
 
