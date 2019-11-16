@@ -13,11 +13,10 @@ from decimal import *
 
 ##############
 # Globals go here
-ellipseSize = 40
 priorImage = None
 priorEllipse = None
 sigma = 1.2
-scaleFactor = 20
+scaleFactor = 9
 ##############
 
 # This method draws the two vertical lines onto the image
@@ -155,12 +154,6 @@ class ellipse:
         self.a = scaleFactor * sigma
         self.b = scaleFactor * 1
 
-    
-    # def computeMinorAxis(self):
-
-    # def computeMajorAxis(self)
-
-
 
 # This method will display a given image in grayscale
 def display_gray(image):
@@ -183,8 +176,8 @@ def display_color(image):
 def isInside(myEllipse, x, y):
     
 
-    term1 = ( (myEllipse.x - x)**2) / float(myEllipse.b**2)
-    term2 = ( (myEllipse.y - y)**2) / float(myEllipse.a**2)
+    term1 = float( ( (myEllipse.x - x)**2) ) / float(myEllipse.b**2)
+    term2 = float( ( (myEllipse.y - y)**2) ) / float(myEllipse.a**2)
     
     if ( (term1 + term2) < 1):
         return True
@@ -199,10 +192,184 @@ def isLocation(image, x, y):
     if ( len(image) <= y):
         return False
     
-    #if ( len(image[0] ) <= x ):
-    #    return False
+    if ( len(image[0] ) <= x ):
+        return False
 
     return True
+
+
+def drawEllipse(newImage, newEllipse):
+    global priorImage
+
+    # The template's ellipses's location
+    #x_c = priorEllipse.x 
+    #y_c = priorEllipse.y 
+
+    x_c = newEllipse.x
+    y_c = newEllipse.y
+
+    # How far to search over the image
+    width = int(newEllipse.a) 
+    height = int(newEllipse.b) 
+
+    # Traverse a rectangular section of the image
+    for y in range( -1 * height, height ):
+        for x in range( -1 * width, width ):
+
+            # Current pixel in the new search window
+            currentX = int(x_c + x)
+            currentY = int(y_c + y)
+
+            if ( isLocation(newImage, currentX, currentY) ):
+                if ( isInside(newEllipse, currentX, currentY) == True):
+
+                    newImage[currentY][currentX][0] = 0
+
+    return newImage
+
+
+# This method takes an ellipse and constructs 
+# its sum of square distances (SSD)
+def ncc(newImage, priorEllipse, newEllipse):
+
+    global priorImage
+
+    x_c = newEllipse.x
+    y_c = newEllipse.y
+
+    x_c_old = priorEllipse.x
+    y_c_old = priorEllipse.y
+
+    # How far to search over the image
+    width = int(priorEllipse.a)
+    height = int(priorEllipse.b)
+    
+    prior_sum = 0
+    new_sum = 0
+    prior_denom = 0
+    new_denom = 0
+
+    ncc = 0
+
+    # Traverse a rectangular section of the image
+    # Compute the average of each image's section
+    for y in range( -1 * height, height ):
+        for x in range( -1 * width, width ):
+
+            # Current pixel in the new search window
+            currentX = int(x_c + x)
+            currentY = int(y_c + y)
+
+            old_x = int(x_c_old + x)
+            old_y = int(y_c_old + y)
+
+            # check other location
+            if ( isLocation(newImage, currentX, currentY) and isLocation(priorImage, old_x, old_y) ):
+                if ( isInside(newEllipse, currentX, currentY) == True):
+
+                    prior_sum = prior_sum + priorImage[old_y][old_x]
+                    prior_denom = prior_denom + 1
+
+                    new_sum = new_sum + newImage[currentY][currentX]
+                    new_denom = new_denom + 1
+    
+
+    # Compute the averages
+    prior_avg = float(prior_sum) / float(prior_denom)
+    new_avg = float(new_sum) / float(new_denom)
+
+    # Is this the right way to interpet the equation?
+    old_hat = 0
+    new_hat = 0
+
+    # Traverse the region again
+    for y in range( -1 * height, height ):
+        for x in range( -1 * width, width ):
+
+            # Current pixel in the new search window
+            currentX = int(x_c + x)
+            currentY = int(y_c + y)
+
+            old_x = int(x_c_old + x)
+            old_y = int(y_c_old + y)
+
+            # check other location
+            if ( isLocation(newImage, currentX, currentY) and isLocation(priorImage, old_x, old_y) ):
+                if ( isInside(newEllipse, currentX, currentY) == True):
+                
+                        # Compute the statistic
+                        i_new = newImage[currentY][currentX]
+                        i_new = i_new - new_avg  
+
+                        
+                        i_t = priorImage[old_y][old_x]
+                        i_t = i_t - prior_avg 
+
+                        # update normalization terms 
+                        old_hat = old_hat + i_t**2
+                        new_hat = new_hat + i_new**2
+
+                        
+                        ncc = ncc + (i_new * i_t)
+
+
+             
+    # Normalize the ncc
+    ncc = ncc / math.sqrt( (  (old_hat) * (new_hat)  ) ) 
+
+    print("The ncc is " + str(cc) )
+    return ncc
+
+
+
+# This method takes an ellipse and constructs 
+# its sum of square distances (SSD)
+def cc(newImage, priorEllipse, newEllipse):
+
+    global priorImage
+
+    x_c = newEllipse.x
+    y_c = newEllipse.y
+
+    x_c_old = priorEllipse.x
+    y_c_old = priorEllipse.y
+
+    # How far to search over the image
+    width = int(priorEllipse.a)
+    height = int(priorEllipse.b)
+
+    cc = 0
+
+    # Traverse a rectangular section of the image
+    for y in range( -1 * height, height ):
+        for x in range( -1 * width, width ):
+
+            # Current pixel in the new search window
+            currentX = int(x_c + x)
+            currentY = int(y_c + y)
+
+            old_x = int(x_c_old + x)
+            old_y = int(y_c_old + y)
+
+            # check other location
+            if ( isLocation(newImage, currentX, currentY) and isLocation(priorImage, old_x, old_y) ):
+                if ( isInside(newEllipse, currentX, currentY) == True):
+
+                    # Compute the statistic
+                    i_new = newImage[currentY][currentX]
+
+                    # SHOULD THIS BE newIMAGE?? or priorImage???
+                    # ???????????? 
+                    # Should the coordinates be diffrent   
+                    # i_t = priorImage[currentY][currentX] 
+                    i_t = priorImage[old_y][old_x]
+                    # print(i_t)
+
+                    cc = cc + (i_new * i_t) 
+
+    print("The cc is " + str(cc) )
+    return cc
+
 
 
 # This method takes an ellipse and constructs 
@@ -210,17 +377,16 @@ def isLocation(image, x, y):
 def ssd(newImage, priorEllipse, newEllipse): 
     
     global priorImage
-
-    # The template's ellipses's location
-    #x_c = priorEllipse.x 
-    #y_c = priorEllipse.y 
     
     x_c = newEllipse.x
     y_c = newEllipse.y
 
+    x_c_old = priorEllipse.x
+    y_c_old = priorEllipse.y
+
     # How far to search over the image
-    width = int(newEllipse.a) + 10
-    height = int(newEllipse.b) + 10
+    width = int(priorEllipse.a) 
+    height = int(priorEllipse.b) 
     
     ssd = 0
 
@@ -232,21 +398,185 @@ def ssd(newImage, priorEllipse, newEllipse):
             currentX = int(x_c + x)  
             currentY = int(y_c + y)
         
-            if ( isLocation(newImage, currentX, currentY) ):
+            old_x = int(x_c_old + x)
+            old_y = int(y_c_old + y)
+            
+            # check other location
+            if ( isLocation(newImage, currentX, currentY) and isLocation(priorImage, old_x, old_y) ):
                 if ( isInside(newEllipse, currentX, currentY) == True):
-                    #image[currentY][currentX] = 0
                     
                     # Compute the statistic
                     i_new = newImage[currentY][currentX]
-                    # print(i_new)
 
-                    i_t = priorImage[currentY][currentX]
+                    # SHOULD THIS BE newIMAGE?? or priorImage???
+                    # ???????????? 
+                    # Should the coordinates be diffrent   
+                    # i_t = priorImage[currentY][currentX] 
+                    i_t = priorImage[old_y][old_x]
                     # print(i_t)
         
                     ssd = ssd + ( (i_new - i_t)**2)  
 
     print("The ssd is " + str(ssd) )
     return ssd
+
+
+def localSearch_ncc(newImage, stride, totalSearch):
+
+    global priorImage
+    global priorEllipse
+    global sigma
+    global scaleFactor
+
+    x = priorEllipse.x
+    y = priorEllipse.y
+
+    offset = np.linspace(0, totalSearch, stride)
+    print(offset)
+
+    allNums = np.array( [] )
+    allEllipses = np.array( [] )
+
+    # For each offset, compute the ssd for the new ellipse
+    for i in range(len(offset) ):
+
+        # Shift just the x 
+        newE1 = ellipse(x + offset[i], y, sigma, scaleFactor)
+        newE2 = ellipse(x - offset[i], y, sigma, scaleFactor)
+        num1 = ncc(newImage, priorEllipse, newE1)
+        num2 = ncc(newImage, priorEllipse, newE2)
+
+        # Shift the y
+        newE3 = ellipse(x, y + offset[i], sigma, scaleFactor)
+        newE4 = ellipse(x, y - offset[i], sigma, scaleFactor)
+        num3 = ncc(newImage, priorEllipse, newE3)
+        num4 = ncc(newImage, priorEllipse, newE4)
+
+        # Shift the x and y - in same directon
+        newE5 = ellipse(x + offset[i], y + offset[i], sigma, scaleFactor)
+        newE6 = ellipse(x - offset[i], y - offset[i], sigma, scaleFactor)
+        num5 = ncc(newImage, priorEllipse, newE5)
+        num6 = ncc(newImage, priorEllipse, newE6)
+
+        # Shift the x and y - in opposite directons
+        newE7 = ellipse(x + offset[i], y - offset[i], sigma, scaleFactor)
+        newE8 = ellipse(x - offset[i], y + offset[i], sigma, scaleFactor)
+        num7 = ncc(newImage, priorEllipse, newE7)
+        num8 = ncc(newImage, priorEllipse, newE8)
+
+        # Don't shift the window at all
+        newE9 = ellipse(x, y, sigma, scaleFactor)
+        num9 = ncc(newImage, priorEllipse, newE9)
+
+
+        nums = np.array( [num1, num2, num3, num4, num5, num6, num7, num8, num9] )
+        ellipses = np.array( [newE1, newE2, newE3, newE4, newE5, newE6, newE7, newE8, newE9] )
+
+        allNums = np.append(allNums, nums)
+        allEllipses = np.append( allEllipses, ellipses )
+
+
+    print("The allNums array is ")
+    print(allNums)
+
+    # Traverse each number and find the smallest one
+    maxIndex = 0
+    maxValue = -1000
+    for i in range(len(allNums) ):
+
+        if ( (maxValue) < (allNums[i] ) ):
+            maxIndex = i
+            maxValue = allNums[i]
+
+    print("The maxIndex is " + str(maxIndex) )
+    print("The length of allNums is " + str(len(allNums)) )
+    # print(allNums[minIndex] )
+    desiredEllipse = allEllipses[maxIndex]
+
+    return desiredEllipse
+
+
+
+# Search locally 
+# stride is the delta in x and y for the next point
+# totalSearch is how far in total to search over in both 
+# the x and y directions
+def localSearch_cc(newImage, stride, totalSearch):
+
+    global priorImage
+    global priorEllipse
+    global sigma
+    global scaleFactor
+
+    x = priorEllipse.x
+    y = priorEllipse.y
+
+    offset = np.linspace(0, totalSearch, stride)
+    print(offset)
+
+    allNums = np.array( [] )
+    allEllipses = np.array( [] )
+
+    # For each offset, compute the ssd for the new ellipse
+    for i in range(len(offset) ):
+
+        # Shift just the x 
+        newE1 = ellipse(x + offset[i], y, sigma, scaleFactor)
+        newE2 = ellipse(x - offset[i], y, sigma, scaleFactor)
+        num1 = cc(newImage, priorEllipse, newE1)
+        num2 = cc(newImage, priorEllipse, newE2)
+
+        # Shift the y
+        newE3 = ellipse(x, y + offset[i], sigma, scaleFactor)
+        newE4 = ellipse(x, y - offset[i], sigma, scaleFactor)
+        num3 = cc(newImage, priorEllipse, newE3)
+        num4 = cc(newImage, priorEllipse, newE4)
+
+        # Shift the x and y - in same directon
+        newE5 = ellipse(x + offset[i], y + offset[i], sigma, scaleFactor)
+        newE6 = ellipse(x - offset[i], y - offset[i], sigma, scaleFactor)
+        num5 = cc(newImage, priorEllipse, newE5)
+        num6 = cc(newImage, priorEllipse, newE6)
+
+        # Shift the x and y - in opposite directons
+        newE7 = ellipse(x + offset[i], y - offset[i], sigma, scaleFactor)
+        newE8 = ellipse(x - offset[i], y + offset[i], sigma, scaleFactor)
+        num7 = cc(newImage, priorEllipse, newE7)
+        num8 = cc(newImage, priorEllipse, newE8)
+
+        # Don't shift the window at all
+        newE9 = ellipse(x, y, sigma, scaleFactor)
+        num9 = cc(newImage, priorEllipse, newE9)
+
+
+        nums = np.array( [num1, num2, num3, num4, num5, num6, num7, num8, num9] )
+        ellipses = np.array( [newE1, newE2, newE3, newE4, newE5, newE6, newE7, newE8, newE9] )
+
+        allNums = np.append(allNums, nums)
+        allEllipses = np.append( allEllipses, ellipses )
+
+
+    print("The allNums array is ")
+    print(allNums)
+    
+    # Traverse each number and find the smallest one
+    maxIndex = 0
+    maxValue = -1000000000000000
+    for i in range(len(allNums) ):
+
+        if ( (maxValue) < (allNums[i] ) ):
+            maxIndex = i
+            maxValue = allNums[i]
+
+    print("The maxIndex is " + str(maxIndex) )
+    print("The length of allNums is " + str(len(allNums)) )
+    # print(allNums[minIndex] )
+    desiredEllipse = allEllipses[maxIndex]
+
+    return desiredEllipse
+
+
+
 
 # Search locally 
 # stride is the delta in x and y for the next point
@@ -293,10 +623,15 @@ def localSearch_ssd(newImage, stride, totalSearch):
         newE8 = ellipse(x - offset[i], y + offset[i], sigma, scaleFactor)
         num7 = ssd(newImage, priorEllipse, newE7)
         num8 = ssd(newImage, priorEllipse, newE8)
-        
-        nums = np.array( [num1, num2, num3, num4, num5, num6, num7, num8] )  
-        ellipses = np.array( [newE1, newE2, newE3, newE4, newE5, newE6, newE7, newE8] )
-        
+            
+        # Don't shift the window at all
+        newE9 = ellipse(x, y, sigma, scaleFactor)
+        num9 = ssd(newImage, priorEllipse, newE9)
+
+
+        nums = np.array( [num1, num2, num3, num4, num5, num6, num7, num8, num9] )  
+        ellipses = np.array( [newE1, newE2, newE3, newE4, newE5, newE6, newE7, newE8, newE9] )
+
         allNums = np.append(allNums, nums)
         allEllipses = np.append( allEllipses, ellipses )
     
@@ -306,14 +641,18 @@ def localSearch_ssd(newImage, stride, totalSearch):
     
     # Traverse each number and find the smallest one
     minIndex = 0
-    for i in range(0, len(allNums) ):
+    minValue = 10000000000
+    for i in range(len(allNums) ):
         
-        if ( (allNums[i] ) < (allNums[minIndex] ) ):
+        if ( (minValue) > (allNums[i] ) ):
             minIndex = i
+            minValue = allNums[i]
     
-
-    print(allNums[minIndex] )
+    print("The minIndex is " + str(minIndex) )
+    print("The length of allNums is " + str(len(allNums)) )
+    # print(allNums[minIndex] )
     desiredEllipse = allEllipses[minIndex]
+    
     return desiredEllipse
 
 
@@ -356,26 +695,36 @@ def constructVideo(startingImage, startingEllipse, compareFunction):
 
 # Import the starting image
 startImage = importImage_N(1)
-secondImage = importImage_N(2)
 
-# display_color(startImage)
-
-# startImage = drawVerticalLine(startImage, 40)
-# startImage = drawHorizontalLine(startImage, 40)
-
-# startImage = drawBoundingBox(startImage, 70, 45, 45, 40)
-# display_color(startImage)
-
-
-#  def __init__(self, x, y, sigma, scaleFactor):
-myEllipse = ellipse(70, 45, 1.2, 20)
-priorEllipse = myEllipse
-
+startEllipse = ellipse(70, 45, sigma, scaleFactor)
+priorEllipse = startEllipse
 priorImage = cv.cvtColor(startImage, cv.COLOR_BGR2GRAY)
-secondImage = cv.cvtColor(secondImage, cv.COLOR_BGR2GRAY)
 
-# resultImage = ssd(secondImage, myEllipse, myEllipse)
-localSearch_ssd(secondImage, 5, 10)
+
+for i in range(1, 500):
+
+    
+    currentImage_color = importImage_N(i)
+    currentImage_gray = cv.cvtColor(currentImage_color, cv.COLOR_BGR2GRAY)
+   
+    # Run it with priorImage - it nails it!
+    returnedEllipse = localSearch_ncc(currentImage_gray, 5, 5)
+
+    # print( str(returnedEllipse.x) + ", " + str(returnedEllipse.y) )
+
+    currentImage_color = drawEllipse(currentImage_color, returnedEllipse)
+    display_color(currentImage_color)
+
+    # Set up the next iteration
+    priorEllipse = returnedEllipse
+    priorImage = currentImage_gray
+
+
+
+
+
+
+
 
 
 
