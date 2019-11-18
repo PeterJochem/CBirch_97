@@ -55,6 +55,19 @@ def drawBoundingBox(image, x, y, height, width):
     # Compute the rows to put the vertical lines
     rowValue1 = x - int(shiftLeft)
     rowValue2 = x + int(shiftLeft)
+    
+    # Check for the bounding box leaving the frame
+    if ( (rowValue1 >= len(image) ) or ( rowValue1 < 0 ) ):
+        return image
+
+    elif( (rowValue2 >= len(image) ) or (rowValue2 < 0) ):
+        return image
+
+    elif( (columnValue1 >= 96 ) or ( columnValue1 < 0) ):
+        return image
+    
+    elif ( (columnValue2 >= 96 ) or ( columnValue2 < 0) ):
+        return image
 
 
     # Draw the first horizontal line
@@ -194,6 +207,9 @@ def isLocation(image, x, y):
         return False
     
     if ( len(image[0] ) <= x ):
+        return False
+    
+    if ( (x < 0) or (y < 0) ):
         return False
 
     return True
