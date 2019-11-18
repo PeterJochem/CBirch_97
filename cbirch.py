@@ -368,7 +368,7 @@ def cc(newImage, priorEllipse, newEllipse):
 
                     cc = cc + (i_new * i_t) 
 
-    print("The cc is " + str(cc) )
+    # print("The cc is " + str(cc) )
     return cc
 
 
@@ -418,7 +418,6 @@ def ssd(newImage, priorEllipse, newEllipse):
         
                     ssd = ssd + ( (i_new - i_t)**2)  
 
-    print("The ssd is " + str(ssd) )
     return ssd
 
 
@@ -509,7 +508,7 @@ def localSearch_cc(newImage, stride, totalSearch):
     y = priorEllipse.y
 
     offset = np.linspace(0, totalSearch, stride)
-    print(offset)
+    # print(offset)
 
     allNums = np.array( [] )
     allEllipses = np.array( [] )
@@ -553,8 +552,8 @@ def localSearch_cc(newImage, stride, totalSearch):
         allEllipses = np.append( allEllipses, ellipses )
 
 
-    print("The allNums array is ")
-    print(allNums)
+    # print("The allNums array is ")
+    # print(allNums)
     
     # Traverse each number and find the smallest one
     maxIndex = 0
@@ -633,8 +632,8 @@ def localSearch_ssd(newImage, stride, totalSearch):
         allEllipses = np.append( allEllipses, ellipses )
     
 
-    print("The allNums array is ")
-    print(allNums)
+    # print("The allNums array is ")
+    # print(allNums)
     
     # Traverse each number and find the smallest one
     minIndex = 0
@@ -645,8 +644,8 @@ def localSearch_ssd(newImage, stride, totalSearch):
             minIndex = i
             minValue = allNums[i]
     
-    print("The minIndex is " + str(minIndex) )
-    print("The length of allNums is " + str(len(allNums)) )
+    # print("The minIndex is " + str(minIndex) )
+    # print("The length of allNums is " + str(len(allNums)) )
     # print(allNums[minIndex] )
     desiredEllipse = allEllipses[minIndex]
     
@@ -699,7 +698,22 @@ priorImage = cv.cvtColor(startImage, cv.COLOR_BGR2GRAY)
 
 height , width , layers =  startImage.shape
 
-out = cv.VideoWriter('output.avi', cv.VideoWriter_fourcc('M','J','P','G'), 10, (width, height))
+
+algorithm = 1
+fileName = "output_cc.avi"
+# This is the desired algorithm to use
+try:
+    algorithm = sys.argv[1]
+    if ( algorithm == "ncc" ):
+        fileName = "output_normalized_cc.avi"
+    elif (algorithm == "sse"):
+        fileName = "output_sum_square_error.avi"
+    
+except:
+    algorithm = "cc"
+
+
+out = cv.VideoWriter(fileName, cv.VideoWriter_fourcc('M','J','P','G'), 10, (width, height))
 
 for i in range(1, 500):
 
@@ -708,12 +722,18 @@ for i in range(1, 500):
     currentImage_gray = cv.cvtColor(currentImage_color, cv.COLOR_BGR2GRAY)
    
     # Run it with priorImage - it nails it!
-    newEllipse = localSearch_ncc(currentImage_gray, 5, 5)
+    if ( algorithm == "ncc"):
+        newEllipse = localSearch_ncc(currentImage_gray, 5, 5)
+    elif ( algorithm == "sse" ):
+        newEllipse = localSearch_ssd(currentImage_gray, 5, 5)
+    else:
+        newEllipse = localSearch_cc(currentImage_gray, 5, 5)
 
-    # print( str(returnedEllipse.x) + ", " + str(returnedEllipse.y) )
-    
+
+
+
     # drawBoundingBox(image, x, y, height, width)
-    print(newEllipse.y)
+    # print(newEllipse.y)
     currentImage_color = drawBoundingBox(currentImage_color, int(newEllipse.x), int(newEllipse.y), 35, 35) 
     # currentImage_color = drawEllipse(currentImage_color, returnedEllipse)
     
