@@ -741,9 +741,9 @@ for i in range(1, 500):
     if ( algorithm == "ncc"):
         newEllipse = localSearch_ncc(currentImage_gray, 5, 5)
     elif ( algorithm == "sse" ):
-        newEllipse = localSearch_ssd(currentImage_gray, 5, 5)
+        newEllipse = localSearch_ssd(currentImage_gray, 1, 2)
     else:
-        newEllipse = localSearch_cc(currentImage_gray, 5, 5)
+        newEllipse = localSearch_cc(currentImage_gray, 2, 2)
 
 
 
