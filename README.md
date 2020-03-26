@@ -1,8 +1,8 @@
 # Description
-This is my implementation of the CBIRCH_97 algorithm for head tracking
+This is my implementation of the CBirch_97 algorithm for head tracking
 
 # Results
-The image processing is quite slow. If you would like to run my code to generate the results given above, then do the following: 
+Here is an example of my algorithm at work
 ![Example of CBirch Tracking Algorithm](https://github.com/PeterJochem/CBirch_97/blob/master/CBirch97.gif "My Implemntation Results")
 
 # How to Run my Code
